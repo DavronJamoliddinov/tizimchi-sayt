@@ -1,0 +1,26 @@
+{
+  "name": "tizimchi-sayt",
+  "version": "1.0.0",
+  "private": true,
+  "description": "tizimchi.com — Tizimchi platformasining sayti (frontend) va uning backend'i (Supabase)",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/dev.mjs --prod",
+    "test": "npm run test:build && npm run test:db && npm run test:ui",
+    "test:build": "node tests/build.test.mjs",
+    "test:db": "node tests/db.test.mjs",
+    "test:ui": "node tests/ui.test.cjs",
+    "assets": "node scripts/assets.mjs",
+    "shots": "node tools/shots.mjs",
+    "og": "node tools/og.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.16",
+    "puppeteer-core": "25.13.0"
+  }
+}

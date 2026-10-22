@@ -1,0 +1,7 @@
+[Unit]
+Description=tizimchi.com/ilova -> app.tizimchi.com once it is live; kick HTTPS for new subdomains
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/tizimchi-app-switch

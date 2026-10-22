@@ -1,0 +1,9 @@
+# Netlify. Git orqali ulansa — har push'da o'zi build qiladi; qo'lda yuklash (drag & drop) uchun: npm run build → dist/ papkasini tashlang.
+# Backend manzili va ochiq kalit: frontend/site.config.mjs da yoki Netlify → Site configuration → Environment variables'da
+# (SITE_URL, SUPABASE_URL, SUPABASE_ANON_KEY). Maxfiy service_role / sb_secret_ kalitini HECH QACHON bermang — build to'xtaydi.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"

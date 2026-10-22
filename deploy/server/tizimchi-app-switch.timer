@@ -1,0 +1,9 @@
+[Unit]
+Description=Check every 10 minutes whether app.tizimchi.com / platforma.tizimchi.com are live
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,107 @@
+/* =====================================================================
+   TIZIMCHI.COM — dizayn tokenlari
+   Rang, tipografiya, oraliq, radius, soya va harakat — faqat shu yerda.
+   Brend: logotipdagi elektr ko'k (#0659FF) va yashil barg (#0FE4B4).
+===================================================================== */
+:root {
+  /* --- Rang: neytral (iliq oq) --- */
+  --bg: #FCFCFB;
+  --bg-alt: #F5F5F3;
+  --surface: #FFFFFF;
+  --surface-2: #F7F7F5;
+  --text: #1D1D1F;
+  --text-2: #55555B;
+  --text-3: #6E6E75;   /* oq va iliq fonda ≥ 4.6:1 (WCAG AA) */
+  --line: rgba(17, 17, 26, .08);
+  --line-2: rgba(17, 17, 26, .14);
+  --fill: rgba(17, 17, 26, .045);
+  --fill-2: rgba(17, 17, 26, .075);
+
+  /* --- Rang: brend --- */
+  --brand: #0B5CFF;
+  --brand-rgb: 11, 92, 255;
+  --brand-strong: #0441D8;
+  --brand-soft: #EEF3FF;
+  --brand-soft-2: #DEE8FF;
+  --brand-grad: linear-gradient(135deg, #36C6FF 0%, #0B86FF 32%, #0B5CFF 58%, #2A35F2 100%);
+  --brand-text-grad: linear-gradient(100deg, #0B5CFF 0%, #2E45F5 45%, #0EA5B8 100%);
+  --leaf: #12C99B;
+  --leaf-ink: #0A7D61;
+  --leaf-soft: #E7F8F2;
+
+  /* --- Rang: holat (semantik) --- */
+  --ok: #157A3E;      --ok-soft: #E8F6EE;
+  --warn: #A3530A;    --warn-soft: #FFF3E3;
+  --danger: #C2271B;  --danger-soft: #FDECEA;
+  --info: #0B5CFF;    --info-soft: #EEF3FF;
+
+  /* --- To'q bo'lim --- */
+  --ink-bg: #090B10;
+  --ink-surface: rgba(255, 255, 255, .045);
+  --ink-line: rgba(255, 255, 255, .09);
+  --ink-text: #F5F5F7;
+  --ink-text-2: #A6A8B3;
+
+  /* --- Tipografiya --- */
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --fs-display: clamp(2.25rem, 1.05rem + 5.6vw, 5.5rem);   /* 36 → 88 */
+  --fs-display-md: clamp(2.125rem, 1.35rem + 3.4vw, 4rem);  /* 34 → 64 */
+  --fs-display-sm: clamp(1.875rem, 1.35rem + 2.2vw, 3.25rem);/* 30 → 52 */
+  --fs-h2: clamp(1.875rem, 1.2rem + 2.9vw, 3.5rem);         /* 30 → 56 */
+  --fs-h3: clamp(1.1875rem, 1.05rem + .5vw, 1.375rem);      /* 19 → 22 */
+  --fs-lead: clamp(1.0625rem, .98rem + .45vw, 1.3125rem);   /* 17 → 21 */
+  --fs-body: 1.0625rem;                                      /* 17 */
+  --fs-sm: .9375rem;                                         /* 15 */
+  --fs-xs: .8125rem;                                         /* 13 */
+  --lh-tight: 1.04;
+  --lh-head: 1.12;
+  --lh-body: 1.55;
+  --track-display: -.038em;
+  --track-head: -.028em;
+  --track-tight: -.012em;
+
+  /* --- Oraliq (4 px asosida) --- */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px;
+  --s-8: 32px; --s-10: 40px; --s-12: 48px; --s-16: 64px; --s-20: 80px; --s-24: 96px;
+  --section-y: clamp(72px, 9vw, 136px);
+  --gutter: clamp(16px, 4vw, 32px);
+  --wrap: 1200px;
+  --wrap-wide: 1320px;
+  --wrap-narrow: 760px;
+  --hdr-h: 64px;
+
+  /* --- Radius --- */
+  --r-xs: 8px; --r-sm: 12px; --r-md: 16px; --r-lg: 22px; --r-xl: 28px; --r-2xl: 36px; --r-pill: 999px;
+
+  /* --- Soya (yengil, qatlamli) --- */
+  --shadow-1: 0 1px 2px rgba(16, 24, 40, .05), 0 1px 1px rgba(16, 24, 40, .03);
+  --shadow-2: 0 12px 32px -12px rgba(16, 24, 40, .16), 0 2px 6px rgba(16, 24, 40, .05);
+  --shadow-3: 0 40px 80px -28px rgba(16, 24, 40, .32), 0 16px 32px -16px rgba(16, 24, 40, .16);
+  --shadow-brand: 0 10px 24px -10px rgba(var(--brand-rgb), .55);
+  --glass: rgba(255, 255, 255, .74);
+  --glass-line: rgba(255, 255, 255, .7);
+
+  /* --- Harakat --- */
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --spring: cubic-bezier(.34, 1.4, .64, 1);
+  --t-1: 140ms; --t-2: 240ms; --t-3: 420ms; --t-4: 760ms;
+
+  /* --- Fokus --- */
+  --focus: 0 0 0 3px var(--bg), 0 0 0 5px rgba(var(--brand-rgb), .55);
+
+  color-scheme: light;
+}
+
+/* Biznes turi belgilari: har biri o'z rangida (iOS ilova belgisidek) */
+[data-tone="orange"] { --tone: linear-gradient(140deg, #FFC15E, #FF7A1A); --tone-sh: rgba(255, 122, 26, .45); }
+[data-tone="blue"]   { --tone: linear-gradient(140deg, #5AC8FF, #0B6BFF); --tone-sh: rgba(11, 107, 255, .45); }
+[data-tone="green"]  { --tone: linear-gradient(140deg, #63E28F, #17A84D); --tone-sh: rgba(23, 168, 77, .42); }
+[data-tone="teal"]   { --tone: linear-gradient(140deg, #4FE3D1, #0EA597); --tone-sh: rgba(14, 165, 151, .42); }
+[data-tone="indigo"] { --tone: linear-gradient(140deg, #9A97FF, #4F44E6); --tone-sh: rgba(79, 68, 230, .42); }
+[data-tone="brown"]  { --tone: linear-gradient(140deg, #E3AE76, #A5682F); --tone-sh: rgba(165, 104, 47, .4); }
+[data-tone="pink"]   { --tone: linear-gradient(140deg, #FF91B6, #EC3F7A); --tone-sh: rgba(236, 63, 122, .4); }
+[data-tone="slate"]  { --tone: linear-gradient(140deg, #A6B4C8, #56657C); --tone-sh: rgba(86, 101, 124, .4); }
+[data-tone="purple"] { --tone: linear-gradient(140deg, #D79BFF, #9446F5); --tone-sh: rgba(148, 70, 245, .4); }
+[data-tone="sky"]    { --tone: linear-gradient(140deg, #8EDCFF, #1E95F0); --tone-sh: rgba(30, 149, 240, .4); }
+[data-tone="gray"]   { --tone: linear-gradient(140deg, #C8CCD3, #868D98); --tone-sh: rgba(134, 141, 152, .4); }

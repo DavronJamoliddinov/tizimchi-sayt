@@ -1,0 +1,56 @@
+# tizimchi.com — sayt (dist/) o'z serveringizda (VPS). Caddy HTTPS sertifikatini o'zi oladi va yangilaydi.
+# Bu SHABLON: deploy/deploy-vps.sh uni to'ldirib serverga /etc/caddy/sites/tizimchi.com.caddy qilib yozadi
+# (serverdagi Caddy /etc/caddy/sites/*.caddy ni import qiladi). To'ldiriladigan joylar:
+#   __CSP__         — dist/.csp (build yaratadi; backend ulangach Supabase manzili ham o'sha yerda bo'ladi)
+#   __APP_TARGET__  — ilovaning amaldagi manzili (app.tizimchi.com; u ulanguncha — avvalgi manzil)
+# Sarlavhalar dist/_headers (Netlify/Cloudflare) bilan bir xil.
+
+tizimchi.com {
+	root * /var/www/tizimchi-sayt
+	encode zstd gzip
+
+	header {
+		Content-Security-Policy "__CSP__"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	# Xeshli fayllar (nom o'zgaradi) — 1 yil kesh; sahifalar — har safar tekshiriladi
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+	@pages path *.html / */
+	header @pages Cache-Control no-cache
+
+	@korish path /video-qollanmalar/korish/*
+	header @korish X-Robots-Tag noindex
+	@admin path /admin/*
+	header @admin X-Robots-Tag "noindex, nofollow"
+
+	redir /biznes-turlari/ombor-ulgurji/* /biznes-turlari/ombor/ permanent
+
+	# Ilova: barqaror manzil tizimchi.com/ilova/… → ilovaning amaldagi joyi (yo'l va so'rov saqlanadi).
+	# Ilova ko'chsa — faqat shu qator o'zgaradi, sayt qayta build qilinmaydi.
+	# handle_path prefiksni redir dan OLDIN olib tashlaydi (oddiy «uri strip_prefix» redir dan keyin bajarilardi)
+	handle_path /ilova* {
+		redir __APP_TARGET__{uri} 302
+	}
+
+	# Papka manzillari (/aloqa/) → index.html; topilmasa — 404 sahifasi
+	handle {
+		try_files {path} {path}/index.html
+		file_server
+	}
+	handle_errors {
+		@404 expression {err.status_code} == 404
+		rewrite @404 /404.html
+		file_server
+	}
+}
+
+www.tizimchi.com {
+	redir https://tizimchi.com{uri} permanent
+}

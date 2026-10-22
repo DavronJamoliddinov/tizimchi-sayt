@@ -1,0 +1,8 @@
+{
+  // VS Code «Go Live» (Live Server kengaytmasi) production build'ni ochadi: avval `npm run build`, keyin «Go Live».
+  "liveServer.settings.root": "/dist",
+  "liveServer.settings.port": 5500,
+  "files.exclude": {
+    ".test-dist*": true
+  }
+}

@@ -1,0 +1,28 @@
+#!/bin/sh
+# tizimchi.com/ilova/* → app.tizimchi.com: domen shu serverga qarab, ilova HTTPS da ochilishi bilan yo'naltirish o'tadi.
+# Yangi subdomenlar (app, platforma) DNS ga qo'shilgach — Caddy qayta yuklanadi (sertifikat darhol olinadi).
+# deploy/deploy-vps.sh o'rnatadi; taymer har 10 daqiqada ishlatadi va hammasi joyida bo'lgach o'zini o'chiradi.
+set -u
+F=/etc/caddy/sites/tizimchi.com.caddy
+NEW=https://app.tizimchi.com
+ME=$(hostname -I | awk '{print $1}')
+resolves() { [ "$(getent ahostsv4 "$1" | awk 'NR==1{print $1}')" = "$ME" ]; }
+https_ok() { curl -fsS -o /dev/null --max-time 10 "https://$1/"; }
+reload() { /usr/local/sbin/caddy-sites-reload >/dev/null 2>&1; }
+
+kick=0
+for d in app.tizimchi.com platforma.tizimchi.com; do
+  if resolves "$d" && ! https_ok "$d"; then kick=1; fi
+done
+[ "$kick" -eq 1 ] && reload
+
+if [ -f "$F" ] && ! grep -q "redir $NEW{uri} 302" "$F" && resolves app.tizimchi.com \
+   && curl -fsS --max-time 10 "$NEW/config.js" 2>/dev/null | grep -q APP_VERSION; then
+  sed -i "s#redir https://[^ {]*{uri} 302#redir $NEW{uri} 302#" "$F"
+  reload && logger -t tizimchi-app-switch "tizimchi.com/ilova -> $NEW"
+fi
+
+if grep -q "redir $NEW{uri} 302" "$F" 2>/dev/null && resolves platforma.tizimchi.com && https_ok platforma.tizimchi.com; then
+  systemctl disable --now tizimchi-app-switch.timer >/dev/null 2>&1
+fi
+exit 0

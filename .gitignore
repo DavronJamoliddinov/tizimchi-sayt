@@ -1,0 +1,8 @@
+node_modules/
+# Build natijalari: dist/ — hostingga yuklanadigan production; .dev-dist/ — lokal ko'rinish; .test-dist*/ — testlar
+dist/
+.dev-dist/
+.test-dist*/
+.DS_Store
+Thumbs.db
+*.log
