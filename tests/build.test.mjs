@@ -3,7 +3,7 @@
 //   CSP (inline skript va style atributi yo'q), rasm alt/o'lcham, JSON-LD, o'zbekcha tipografiya, video qo'llanma qoidalari,
 //   asossiz marketing da'volari yo'qligi, /admin/ (indekslanmaydi), backend sozlamasi (manzil, kalit turi, CSP).
 // Ishlatish: npm run test:build
-import { readFileSync, readdirSync, existsSync, rmSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync, rmSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -18,12 +18,13 @@ const read = (p) => readFileSync(join(ROOT, p), "utf8");
 /** Backend sozlamasi testlar uchun aniq: muhitdagi qiymatlar aralashmasin */
 const ENV0 = { ...process.env, SITE_URL: "", APP_URL: "", SUPABASE_URL: "", SUPABASE_ANON_KEY: "" };
 
-function run(out, tutorials, env = {}) {
-  return spawnSync(process.execPath, [join(ROOT, "scripts", "build.mjs"), `--out=${out}`, `--tutorials=${tutorials}`],
+// Yuklab olish fayllari ham aniq: standart — namunaviy (haqiqiy downloads.json versiyasiga bog'liq bo'lmasin)
+function run(out, tutorials, env = {}, downloads = "tests/fixtures/downloads.json") {
+  return spawnSync(process.execPath, [join(ROOT, "scripts", "build.mjs"), `--out=${out}`, `--tutorials=${tutorials}`, `--downloads=${downloads}`],
     { cwd: ROOT, encoding: "utf8", env: { ...ENV0, ...env } });
 }
-function build(out, tutorials, env = {}) {
-  const r = run(out, tutorials, env);
+function build(out, tutorials, env = {}, downloads = undefined) {
+  const r = run(out, tutorials, env, downloads);
   if (r.status !== 0) throw new Error(`build xatosi:\n${r.stdout}\n${r.stderr}`);
   return join(ROOT, out);
 }
@@ -40,10 +41,12 @@ const SITE = (await import("../frontend/site.config.mjs")).default.SITE_URL;
 
 console.log("Build");
 const DIST = build(".test-dist", "tests/fixtures/tutorials.json");
-const EMPTY = build(".test-dist-empty", "none");
+const EMPTY = build(".test-dist-empty", "none", {}, "none");
 const SUPA = "https://abcdefghijklmnop.supabase.co";
 const ANON = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${Buffer.from(JSON.stringify({ iss: "supabase", role: "anon" })).toString("base64url")}.sig`;
 const LIVE = build(".test-dist-backend", "none", { SUPABASE_URL: SUPA, SUPABASE_ANON_KEY: ANON, SITE_URL: "https://tizimchi-sayt.netlify.app" });
+/** Sahifadagi JSON-LD obyektlari */
+const lds = (html) => [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
 /** dist ichidagi barcha HTML sahifalar: { path: "/aloqa/index.html", html } */
 const pages = (dist) => {
   const out = [];
@@ -102,10 +105,38 @@ await test("sitemap: barcha indekslanadigan sahifalar, noindex sahifalar va /adm
   assert.match(robots, new RegExp(`Sitemap: ${SITE}/sitemap.xml`));
   assert.match(robots, /Disallow: \/admin\//);
 });
+await test("yuklab olish: Windows (.exe) va Android (.apk) — tizimchi.com/yuklab/ dan, versiya, hajm, SHA-256 va imzo; iPhone, macOS/Linux", () => {
+  const dl = JSON.parse(read("tests/fixtures/downloads.json"));
+  const html = readFileSync(join(DIST, "yuklab-olish", "index.html"), "utf8");
+  assert.match(html, /data-platforms/);
+  for (const p of ["windows", "android", "ios", "desktop"]) assert.match(html, new RegExp(`data-platform="${p}"`));
+  assert.equal((html.match(/<ol class="dl-steps">/g) || []).length, 4, "to'rtala qurilmaga qadamlar");
+  assert.match(html, new RegExp(`href="/yuklab/${dl.windows.file.replace(/\./g, "\\.")}" download`), "Windows dasturi o'z serverdan");
+  assert.match(html, new RegExp(`href="/yuklab/${dl.android.file.replace(/\./g, "\\.")}" download`), "Android ilovasi o'z serverdan");
+  assert.doesNotMatch(html, /\/download\/dukon\.apk|t\.me\/[^"]*"[^>]*>[^<]*Windows dasturini so/, "eski havolalar qolmasin");
+  assert.match(html, /Versiya 9\.8\.7 · 107 MB · Windows 10 va 11/);
+  assert.match(html, /Versiya 9\.8\.7 · 2,0 MB · Android 8\.0 va yangi/);
+  for (const v of [dl.windows.sha256, dl.android.sha256, dl.android.cert_sha256]) assert.ok(html.includes(`<code>${v}</code>`), `xesh: ${v}`);
+  assert.match(html, /raqamli sertifikat bilan imzolanmagan/, "imzolanmagan exe — ochiq aytiladi");
+  assert.match(html, /«Batafsil» → «Baribir ishga tushirish»/);
+  const app = lds(html).find((x) => x["@type"] === "SoftwareApplication");
+  assert.deepEqual(app?.downloadUrl, [`${SITE}/yuklab/${dl.windows.file}`, `${SITE}/yuklab/${dl.android.file}`]);
+  assert.equal(readFileSync(join(DIST, ".yuklab"), "utf8"),
+    `windows ${dl.windows.file} ${dl.windows.sha256} ${dl.windows.bytes}\nandroid ${dl.android.file} ${dl.android.sha256} ${dl.android.bytes}\n`, "deploy uchun ro'yxat");
+  assert.match(html, /install\.html\?p=ios/);
+  assert.match(html, /data-current hidden/, "«Sizning qurilmangiz» — brauzerda ochiladi");
+  for (const page of ["index.html", join("aloqa", "index.html")]) {
+    const h = readFileSync(join(DIST, page), "utf8");
+    assert.match(h, /href="\/yuklab-olish\/"/, `${page}: o'rnatish havolasi /yuklab-olish/ ga`);
+    assert.doesNotMatch(h, /install\.html"/, `${page}: install.html ga to'g'ridan-to'g'ri havola qolmasin`);
+  }
+});
+
 await test("ichki havolalar va resurslar: buzuq manzil yo'q", () => {
   const exists = (u) => {
     const p = decodeURIComponent(u.split(/[?#]/)[0]);
     if (p === "" || p === "/") return true;
+    if (/^\/(yuklab|media)\//.test(p)) return true; // serverda alohida papkadan — borligini deploy-vps.sh tekshiradi
     return existsSync(join(DIST, p)) && (!p.endsWith("/") || existsSync(join(DIST, p, "index.html")));
   };
   for (const { path, html } of all) {
@@ -195,6 +226,59 @@ await test("video yo'q bo'lsa: soxta video emas — «tez orada» holati", () =>
   assert.ok(!/class="tcard"/.test(home));
   assert.match(readFileSync(join(EMPTY, "biznes-turlari", "dorixona", "index.html"), "utf8"), /Bu bo‘lim uchun video qo‘llanma tez orada qo‘shiladi\./);
   assert.match(readFileSync(join(EMPTY, "imkoniyatlar", "index.html"), "utf8"), /Video qo‘llanma tez orada/);
+});
+await test("o'z video qo'llanmalaringiz (frontend/content/tutorials.json): har qator sayt qoidasiga mos, fayl bo'lsa — /media/ da ?v= xesh bilan", () => {
+  const rows = JSON.parse(read("frontend/content/tutorials.json"));
+  const media = (ext) => new RegExp(`^https://tizimchi\\.com/media/qollanmalar/[a-z0-9-]+\\.${ext}\\?v=[0-9a-f]{10}$`);
+  for (const r of rows) {
+    const t = T.normalize(r);
+    assert.ok(t, `noto'g'ri qator: ${r.slug}`);
+    if (t.video.kind === "file" && r.video_url.startsWith("https://tizimchi.com/")) {
+      assert.match(r.video_url, media("mp4"), r.slug);
+      assert.match(r.thumbnail_url, media("jpg"), r.slug);
+    }
+    const group = CAPABILITY_GROUPS.find((g) => g.id === t.section);
+    assert.ok(group, `bo'lim: ${t.section}`);
+    if (t.capability) assert.ok(group.items.some((x) => x.id === t.capability), `imkoniyat: ${t.section}:${t.capability}`);
+  }
+});
+await test("npm run video: YouTube havola qo'shiladi → backend'siz build sahifasini yaratadi; noto'g'ri bo'lim va havola rad etiladi; o'chiriladi", () => {
+  const file = join(ROOT, "frontend", "content", "tutorials.json");
+  const orig = existsSync(file) ? readFileSync(file, "utf8") : null;
+  const cli = (...a) => spawnSync(process.execPath, [join(ROOT, "tools", "video.mjs"), ...a], { cwd: ROOT, encoding: "utf8" });
+  const out = join(ROOT, ".test-dist-local");
+  try {
+    let r = cli("add", "https://youtu.be/dQw4w9WgXcQ", "--title", "Sinov: kassada qaytarish", "--section", "savdo", "--capability", "kassa",
+      "--duration", "1:05", "--steps", "Birinchi | Ikkinchi", "--featured");
+    assert.equal(r.status, 0, r.stderr);
+    const row = JSON.parse(readFileSync(file, "utf8")).find((x) => x.slug === "sinov-kassada-qaytarish");
+    assert.ok(row, "manzil sarlavhadan: o' → o, «:» tushib qoladi");
+    assert.deepEqual([row.duration_sec, row.steps, row.is_featured, row.product_section, row.capability], [65, ["Birinchi", "Ikkinchi"], true, "savdo", "kassa"]);
+    build(".test-dist-local", "live");
+    assert.ok(existsSync(join(out, "video-qollanmalar", "sinov-kassada-qaytarish", "index.html")));
+    assert.match(readFileSync(join(out, "index.html"), "utf8"), /class="tcard"/, "tanlangan video bosh sahifada");
+    assert.notEqual(cli("add", "https://youtu.be/dQw4w9WgXcQ", "--title", "X", "--section", "yoq").status, 0);
+    assert.match(cli("add", "https://vimeo.com/1", "--title", "X", "--section", "savdo").stderr, /faqat YouTube/);
+    assert.equal(cli("remove", "sinov-kassada-qaytarish").status, 0);
+    assert.ok(!JSON.parse(readFileSync(file, "utf8")).some((x) => x.slug === "sinov-kassada-qaytarish"));
+  } finally {
+    if (orig === null) rmSync(file, { force: true }); else writeFileSync(file, orig);
+    rmSync(out, { recursive: true, force: true });
+  }
+});
+await test("yuklab olish fayli bo'lmasa: soxta tugma yo'q — Android va kompyuter brauzer orqali; noto'g'ri downloads.json build'ni to'xtatadi", () => {
+  const html = readFileSync(join(EMPTY, "yuklab-olish", "index.html"), "utf8");
+  assert.doesNotMatch(html, /\/yuklab\/|data-platform="windows"/);
+  assert.match(html, /<h2 class="dl-title">Kompyuter<\/h2>/);
+  assert.match(html, /Chrome’da ochish/);
+  assert.equal(readFileSync(join(EMPTY, ".yuklab"), "utf8"), "");
+  const bad = join(ROOT, ".test-bad-downloads.json");
+  try {
+    writeFileSync(bad, JSON.stringify({ windows: { file: "virus.exe", version: "1.0.0", bytes: 1, sha256: "x" } }));
+    const r = run(".test-dist-bad", "none", {}, ".test-bad-downloads.json");
+    assert.notEqual(r.status, 0);
+    assert.match(r.stderr, /downloads\.json: «windows» yozuvi noto'g'ri/);
+  } finally { rmSync(bad, { force: true }); rmSync(join(ROOT, ".test-dist-bad"), { recursive: true, force: true }); }
 });
 await test("video manzili qoidasi: YouTube yoki https .mp4/.webm (backend bilan bir xilligi — tests/db.test.mjs)", () => {
   const ok = ["https://youtu.be/dQw4w9WgXcQ", "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=1m30s", "https://youtube.com/shorts/dQw4w9WgXcQ",

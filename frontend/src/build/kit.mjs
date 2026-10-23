@@ -16,8 +16,11 @@ export const at = (/** @type {unknown} */ s) => esc(typo(s));
  * @typedef {{
  *   cfg: Cfg, asset: (p: string) => string, icon: (n: string, cls?: string) => string,
  *   url: (p: string) => string, appUrl: (p?: string) => string, tutorials: import("../client/tutorials.js").Tutorial[],
- *   tctx: import("../client/tutorials.js").Ctx,
+ *   tctx: import("../client/tutorials.js").Ctx, downloads: Downloads,
  * }} Ctx
+ * @typedef {{ file: string, version: string, bytes: number, sha256: string, date: string, signed?: boolean | null,
+ *   cert_sha256?: string | null, min_android?: string }} DownloadFile
+ * @typedef {{ windows?: DownloadFile, android?: DownloadFile }} Downloads
  */
 
 /** Lucide ikonkalari (frontend/assets/icons.json) — noma'lum nom build'ni to'xtatadi */

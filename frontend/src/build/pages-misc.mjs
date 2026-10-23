@@ -154,7 +154,7 @@ export function contactPage(c) {
     { icon: "phone", title: "Telefon", text: c.cfg.phone, href: `tel:${tel}`, ext: false },
     { icon: "send", title: "Telegram", text: `@${c.cfg.telegram}`, href: `https://t.me/${c.cfg.telegram}`, ext: true },
     { icon: "log-in", title: "Tizimga kirish", text: "Mavjud foydalanuvchilar uchun", href: c.appUrl(), ext: false },
-    { icon: "smartphone", title: "Ilovani o'rnatish", text: "Android, iPhone va kompyuter", href: c.appUrl("install.html"), ext: true },
+    { icon: "smartphone", title: "Ilovani o'rnatish", text: "Android, iPhone va kompyuter", href: "/yuklab-olish/", ext: false },
   ];
   const body = `<section class="page-hero">
   <div class="wrap">
@@ -181,6 +181,145 @@ export function contactPage(c) {
     path: "/aloqa/", nav: "aloqa", title: "Aloqa va demo so'rovi",
     description: `Tizimchi bilan bog'lanish: demo so'rovi, telefon ${c.cfg.phone}, Telegram @${c.cfg.telegram}.`,
     og: "og/aloqa.jpg", body, ld: [breadcrumbLd(c, crumbs), faqLd(faq)],
+  };
+}
+
+/* ------------------------------------------------------------ Yuklab olish ------------------------------------------------------------ */
+/**
+ * Ilovani o'rnatish. Windows dasturi (.exe) va Android ilovasi (.apk) — tizimchi.com/yuklab/ dan; versiya, hajm, SHA-256 va imzo —
+ * frontend/content/downloads.json (npm run yuklab yozadi). iPhone — Safari orqali; macOS va Linux — brauzer orqali o'rnatish.
+ * Fayli hali qo'yilmagan platformada — brauzer orqali o'rnatish yo'li (soxta tugma yo'q). Qurilma o'zi aniqlanadi (main.js).
+ * @param {import("./kit.mjs").Ctx} c
+ */
+export function downloadPage(c) {
+  const crumbs = [{ name: "Bosh sahifa", href: "/" }, { name: "Yuklab olish", href: "/yuklab-olish/" }];
+  const { windows: win, android: apk } = c.downloads;
+  const mb = (/** @type {number} */ b) => `${(b / 1048576).toFixed(b < 10 * 1048576 ? 1 : 0).replace(".", ",")} MB`;
+  const fileHref = (/** @type {import("./kit.mjs").DownloadFile} */ d) => `/yuklab/${d.file}`;
+  const meta = (/** @type {import("./kit.mjs").DownloadFile} */ d, /** @type {string} */ req) =>
+    `<p class="dl-meta">${c.icon("package")}<span>${tx(`Versiya ${d.version} · ${mb(d.bytes)} · ${req}`)}</span></p>`;
+  const getBtn = (/** @type {string} */ label, /** @type {import("./kit.mjs").DownloadFile} */ d) =>
+    btn(c, label, fileHref(d), { icon: "download", attrs: " download" });
+  const open = (/** @type {string} */ label, kind = "secondary") => btn(c, label, c.appUrl(), { kind, external: true });
+  /** @type {{ id: string, icon: string, title: string, sub: string, meta: string, steps: string[], note: string, actions: string[] }[]} */
+  const plats = [];
+  if (win) {
+    plats.push({ id: "windows", icon: "monitor", title: "Windows", sub: "Kompyuter va noutbuk uchun dastur",
+      meta: meta(win, "Windows 10 va 11 (64‑bit)"),
+      steps: ["«Windows uchun yuklab olish» ni bosing va yuklangan faylni oching.",
+        ...(win.signed ? [] : ["«Windows kompyuteringizni himoya qildi» oynasi chiqsa: «Batafsil» → «Baribir ishga tushirish» (sababi — pastda)."]),
+        "O'rnatish tugagach, ish stolidagi Tizimchi belgisidan oching va login bilan kiring."],
+      note: "Chekni printer oynasisiz chop etadi (58/80 mm termoprinter yoki A4), internetsiz ishlaydi, yangilanishlar o'zi keladi.",
+      actions: [getBtn("Windows uchun yuklab olish", win), open("Brauzerda ochish")] });
+  }
+  plats.push(apk
+    ? { id: "android", icon: "smartphone", title: "Android", sub: "Telefon va planshet",
+      meta: meta(apk, `Android ${apk.min_android || "8.0"} va yangi`),
+      steps: ["«APK yuklab olish» tugmasini bosing va faylni oching.",
+        "Telefon «noma'lum ilovalar»ga ruxsat so'rasa: «Sozlamalar» → «Ruxsat berish».",
+        "«O'rnatish» ni bosing — bosh ekranda Tizimchi belgisi paydo bo'ladi."],
+      note: "Yoki APK'siz: ilovani Chrome'da oching → ⋮ menyu → «Ilovani o'rnatish».",
+      actions: [getBtn("APK yuklab olish", apk), open("Chrome'da ochish")] }
+    : { id: "android", icon: "smartphone", title: "Android", sub: "Telefon va planshet — Chrome orqali", meta: "",
+      steps: ["«Chrome'da ochish» ni bosing — ilova Chrome brauzerida ochiladi.",
+        "⋮ menyu → «Ilovani o'rnatish» (yoki «Bosh ekranga qo'shish»).",
+        "Bosh ekrandagi Tizimchi belgisidan oching va login bilan kiring."],
+      note: "O'rnatilgan ilova internetsiz ham ochiladi, yangilanishlar o'zi keladi.",
+      actions: [open("Chrome'da ochish", "primary")] });
+  plats.push({ id: "ios", icon: "smartphone", title: "iPhone va iPad", sub: "Safari orqali — App Store kerak emas", meta: "",
+    steps: ["«Safari'da ochish» tugmasini bosing — ilova Safari brauzerida ochiladi.",
+      "«Ulashish» tugmasini bosing (ko'rinmasa, avval pastdagi «•••» ni bosing).",
+      "«Bosh ekranga qo'shish» → «Qo'shish» ni tanlang.",
+      "Ilovani bosh ekrandagi Tizimchi belgisidan oching va login bilan kiring."],
+    note: "Havola Telegram ichida ochilgan bo'lsa, avval menyudan «Safari'da ochish» ni tanlang.",
+    actions: [btn(c, "Safari'da ochish", c.appUrl("install.html?p=ios"), { external: true })] });
+  plats.push({ id: "desktop", icon: "laptop", title: win ? "macOS va Linux" : "Kompyuter", sub: win ? "Brauzer orqali — dastur kabi o'rnatiladi" : "Windows, macOS va Linux",
+    meta: "",
+    steps: ["Ilovani Chrome yoki Edge brauzerida oching.",
+      "Manzil satrining o'ng tomonidagi «O'rnatish» belgisini bosing.",
+      "Tizimchi alohida oynada ochiladi va kompyuteringizda ilova sifatida saqlanadi."],
+    note: win ? "Windows'da ham shu yo'l bilan, dasturni yuklab olmasdan o'rnatish mumkin." : "O'rnatilgan ilova internetsiz ham ochiladi, yangilanishlar o'zi keladi.",
+    actions: [open("Brauzerda ochish", "primary")] });
+
+  const card = (/** @type {typeof plats[number]} */ p) => `<article class="dl-card" data-platform="${p.id}">
+      <span class="badge badge-ready dl-you" data-current hidden>${tx("Sizning qurilmangiz")}</span>
+      <div class="dl-head"><span class="feature-ic">${c.icon(p.icon)}</span>
+        <div><h2 class="dl-title">${tx(p.title)}</h2><p class="dl-sub">${tx(p.sub)}</p></div></div>
+      ${p.meta}
+      <ol class="dl-steps">${p.steps.map((s) => `<li>${tx(s)}</li>`).join("")}</ol>
+      <p class="dl-note">${c.icon("info")}<span>${tx(p.note)}</span></p>
+      <div class="dl-actions">${p.actions.join("")}</div>
+    </article>`;
+  const perks = [
+    { icon: "wifi-off", title: "Internetsiz ham ishlaydi",
+      text: "O'rnatilgan ilova internetsiz ham ochiladi: sotuv, buyurtma, kirim va to'lovlar yozilaveradi, internet qaytganda o'zi yuboriladi." },
+    { icon: "refresh-cw", title: "Yangilanishlar o'zi keladi",
+      text: "Yangi imkoniyatlar ilova ochilganda o'zi yuklanadi — qayta o'rnatish shart emas." },
+    { icon: "users", title: "Bitta hisob — hamma qurilmada",
+      text: "Telefon, planshet va kompyuterda bir xil login bilan kirasiz. Bir qurilmadagi sotuv boshqasida darhol ko'rinadi." },
+  ];
+  const hashes = [
+    win && { name: win.file, label: "SHA‑256 · Windows'da tekshirish: PowerShell → Get-FileHash <fayl>", value: win.sha256 },
+    apk && { name: apk.file, label: "SHA‑256", value: apk.sha256 },
+    apk?.cert_sha256 && { name: "Android ilova imzosi", label: "Sertifikat SHA‑256 — barcha versiyalarda bir xil", value: apk.cert_sha256 },
+  ].filter(Boolean);
+  const verify = hashes.length ? `<section class="section" aria-labelledby="dl-verify-title">
+  <div class="wrap dl-verify">
+    ${sectionHead({ eyebrow: "Xavfsizlik", title: "Fayl haqiqiyligini tekshirish", id: "dl-verify-title",
+      lead: "Fayllarni faqat shu sahifadan (tizimchi.com) yuklab oling. Yuklangan faylning SHA‑256 xeshi quyidagi bilan bir xil bo'lsa — fayl asl va buzilmagan." })}
+    <dl class="dl-hashes">${hashes.map((h) => `<div class="dl-hash"><dt><b>${tx(h.name)}</b><small>${tx(h.label)}</small></dt><dd><code>${esc(h.value)}</code></dd></div>`).join("")}</dl>
+    ${win && !win.signed ? `<p class="dl-note">${c.icon("shield-check")}<span>${tx("Windows dasturi hozircha raqamli sertifikat bilan imzolanmagan — Windows birinchi ishga tushirishda shuning uchun ogohlantiradi. Fayl xeshi yuqoridagi bilan bir xil bo'lsa, bu Tizimchi'ning asl dasturi.")}</span></p>` : ""}
+  </div>
+</section>` : "";
+  const faq = [
+    { q: "Nega ilova Google Play yoki App Store'da emas?",
+      a: `Tizimchi to'g'ridan-to'g'ri shu sahifadan o'rnatiladi: ${[win && "Windows dasturi", apk && "Android ilovasi"].filter(Boolean).join(" va ") || "Android va kompyuterga — brauzer orqali"}${win || apk ? " — fayl sifatida" : ""}, iPhone'ga — Safari orqali. Do'konlarni kutish shart emas, yangilanishlar esa darhol keladi.` },
+    { q: "Fayllarni yuklab olish xavfsizmi?",
+      a: `Fayllarni faqat shu sahifadan yuklab oling.${apk ? " Android ilovasi doim bir xil kalit bilan imzolanadi; telefon «noma'lum manba» deb so'rashi Play Market'dan tashqari o'rnatiladigan har qanday ilova uchun odatiy." : ""}${win && !win.signed ? " Windows dasturi hozircha raqamli sertifikatsiz — Windows ogohlantirishi shundan." : ""} Fayl buzilmaganini SHA‑256 xeshi bilan tekshirish mumkin.` },
+    ...(win ? [{ q: "Windows dasturi va brauzer versiyasining farqi nima?",
+      a: "Imkoniyatlar bir xil, login ham bitta. Dastur o'z oynasida ochiladi, ish stolida belgisi bo'ladi va chekni printer oynasisiz, darhol chop etadi (58/80 mm termoprinter yoki A4)." }] : []),
+    { q: "Yangi versiya chiqsa, qayta o'rnatish kerakmi?",
+      a: "Yo'q. Ilova ochilganda yangilanishlar o'zi keladi — telefon va kompyuterda ham." },
+    { q: "Internet bo'lmasa ishlaydimi?",
+      a: "Ha. O'rnatilgan ilova internetsiz ham ochiladi va sotuv, buyurtma, kirim, qarz va to'lovlarni yozib boradi. Internet qaytganda hammasi o'zi serverga yuboriladi." },
+    { q: "Login va parolni qayerdan olaman?",
+      a: "Biznes egasi ilovada ro'yxatdan o'tadi — 14 kun bepul. Xodimlarga login va parolni biznes egasi ilovaning «Xodimlar» bo'limida beradi." },
+  ];
+  const files = [win, apk].filter(Boolean);
+  const appLd = files.length ? {
+    "@context": "https://schema.org", "@type": "SoftwareApplication", name: "Tizimchi", applicationCategory: "BusinessApplication",
+    operatingSystem: [win && "Windows 10, Windows 11", apk && `Android ${apk.min_android || "8.0"}+`, "iOS", "macOS", "Linux"].filter(Boolean).join(", "),
+    softwareVersion: files[0].version, downloadUrl: files.map((d) => c.url(fileHref(d))), inLanguage: ["uz", "ru"], url: c.url("/yuklab-olish/"),
+  } : null;
+  const body = `<section class="page-hero">
+  <div class="wrap">
+    ${breadcrumbs(c, crumbs)}
+    ${sectionHead({ h: 1, eyebrow: "Yuklab olish", title: "Tizimchi'ni telefon va kompyuterga o'rnating",
+      lead: `${win || apk ? `${[win && "Windows dasturi", apk && "Android ilovasi"].filter(Boolean).join(" va ")} — shu yerdan yuklab olinadi, iPhone'ga — Safari orqali o'rnatiladi.` : "Android, iPhone va kompyuterga brauzer orqali o'rnatiladi."} App Store yoki Google Play shart emas. Qurilmangiz avtomatik aniqlanadi, boshqasini o'zingiz tanlashingiz mumkin.` })}
+    <div class="dl-grid" data-platforms>${plats.map(card).join("")}</div>
+  </div>
+</section>
+${verify}
+<section class="section section-alt" aria-labelledby="dl-perks-title">
+  <div class="wrap">
+    ${sectionHead({ eyebrow: "O'rnatilgan ilova", title: "Telefon va kompyuterda — bir xil qulaylik", id: "dl-perks-title", center: true })}
+    <div class="feature-grid">${perks.map((b) => `<div class="feature" data-reveal><span class="feature-ic">${c.icon(b.icon)}</span><h3>${tx(b.title)}</h3><p>${tx(b.text)}</p></div>`).join("")}</div>
+  </div>
+</section>
+<section class="section" aria-labelledby="dl-faq-title">
+  <div class="wrap faq-layout">
+    <div class="faq-side">${sectionHead({ eyebrow: "Savollar", title: "O'rnatish haqida", id: "dl-faq-title" })}</div>
+    ${faqList(c, faq)}
+  </div>
+</section>
+${ctaBand(c, { title: "14 kun bepul sinab ko'ring", text: "Ro'yxatdan o'ting yoki demo so'rang — biznesingizga mos imkoniyatlarni ko'rsatamiz.",
+    primary: { label: "Ro'yxatdan o'tish", href: c.appUrl("?signup=1") }, secondary: { label: "Demo so'rash", href: "/aloqa/#demo" } })}`;
+  return {
+    path: "/yuklab-olish/", nav: "yuklab", title: "Ilovani yuklab olish va o'rnatish",
+    description: win || apk
+      ? `Tizimchi'ni yuklab olish: ${[win && "Windows dasturi", apk && "Android ilovasi (APK)"].filter(Boolean).join(", ")}, iPhone va macOS — o'rnatish qadamlari, versiya va fayl xeshi.`
+      : "Tizimchi ilovasini Android, iPhone va kompyuterga o'rnatish: qadamlar, internetsiz ishlash, yangilanishlar.",
+    og: "og/yuklab-olish.jpg", body, ld: [breadcrumbLd(c, crumbs), faqLd(faq), ...(appLd ? [appLd] : [])],
   };
 }
 

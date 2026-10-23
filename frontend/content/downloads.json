@@ -1,0 +1,19 @@
+{
+  "windows": {
+    "file": "Tizimchi-Setup-2.11.0.exe",
+    "version": "2.11.0",
+    "bytes": 112363816,
+    "sha256": "5a289a6fe124cd46ce6d4aa80a3b4cbe1e8d22290f7bd568755c254ee4b09082",
+    "date": "2026-10-23",
+    "signed": false
+  },
+  "android": {
+    "file": "Tizimchi-2.11.0.apk",
+    "version": "2.11.0",
+    "bytes": 2147368,
+    "sha256": "b1ac47f8768d602597945b28c5b900380019dd26410029dff8e41248a24e3449",
+    "date": "2026-10-23",
+    "cert_sha256": "EA:48:23:A5:13:D6:A2:3A:5B:3E:7B:03:68:DC:B7:B1:71:9A:D8:BB:77:8C:09:3B:3D:BC:C7:E6:7B:E1:90:8A",
+    "min_android": "8.0"
+  }
+}

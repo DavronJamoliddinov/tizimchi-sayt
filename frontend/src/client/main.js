@@ -74,7 +74,7 @@ function initHeader() {
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   });
-  matchMedia("(min-width: 1120px)").addEventListener("change", (m) => { if (m.matches) close(false); });
+  matchMedia("(min-width: 1200px)").addEventListener("change", (m) => { if (m.matches) close(false); });
 }
 
 /* Bosh sahifada «FAQ» bo'limi ko'rinayotganda menyuda belgilanadi; imkoniyatlar sahifasida — bo'limlar menyusi */
@@ -480,6 +480,22 @@ function initLeadForms() {
   }
 }
 
+/* Yuklab olish: qurilma o'zi aniqlanadi — o'sha kartochka birinchi va belgilangan (boshqasini ham tanlash mumkin) */
+function initDownload() {
+  const grid = $("[data-platforms]");
+  if (!grid) return;
+  const ua = navigator.userAgent || "";
+  const ios = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const cur = ios ? "ios" : /Android/i.test(ua) ? "android" : /Windows/i.test(ua) ? "windows" : "desktop";
+  // Windows dasturi sahifada bo'lmasa (fayl hali qo'yilmagan) — umumiy kompyuter kartochkasi
+  const card = $(`[data-platform="${cur}"]`, grid) || $('[data-platform="desktop"]', grid);
+  if (!card) return;
+  card.classList.add("is-current");
+  const mark = $("[data-current]", card);
+  if (mark) mark.hidden = false;
+  grid.prepend(card);
+}
+
 /* ============================== Ishga tushirish ============================== */
 for (const el of $$("[data-year]")) el.textContent = String(new Date().getFullYear());
 initHeader();
@@ -489,3 +505,4 @@ initFaq();
 initScrollSpy();
 initLeadForms();
 initTutorials();
+initDownload();

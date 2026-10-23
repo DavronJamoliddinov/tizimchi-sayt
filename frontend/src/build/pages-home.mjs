@@ -178,7 +178,7 @@ function platform(c) {
       lead: "Do'konda, omborda yoki yo'lda — Tizimchi siz bilan. Internet uzilsa ham ish to'xtamaydi." })}
     <div class="dark-grid">${PLATFORM.map((p) => `<div class="dark-tile" data-reveal><span class="dark-ic">${c.icon(p.icon)}</span><h3>${tx(p.title)}</h3><p>${tx(p.text)}</p></div>`).join("")}</div>
     <div class="dark-actions">
-      ${btn(c, "Ilovani o'rnatish", c.appUrl("install.html"), { kind: "light", external: true, icon: "smartphone" })}
+      ${btn(c, "Ilovani o'rnatish", "/yuklab-olish/", { kind: "light", icon: "smartphone" })}
       ${btn(c, "Jonli demo", c.appUrl("demo.html"), { kind: "ghost-light", external: true, iconEnd: "arrow-up-right", attrs: 'data-track="hero_cta_clicked" data-cta="platform-demo"' })}
     </div>
   </div>

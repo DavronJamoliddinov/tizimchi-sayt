@@ -6,3 +6,9 @@ dist/
 .DS_Store
 Thumbs.db
 *.log
+
+# Katta fayllar git'ga tushmaydi — deploy/deploy-vps.sh serverga yuklaydi:
+#   media/  — o'zingizning video qo'llanmalaringiz (npm run video -- add …)
+#   yuklab/ — Windows o'rnatgichi va Android ilovasi (npm run yuklab)
+media/
+yuklab/

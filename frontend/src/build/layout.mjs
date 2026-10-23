@@ -9,6 +9,7 @@ export const NAV = [
   { key: "imkoniyatlar", label: "Imkoniyatlar", href: "/imkoniyatlar/" },
   { key: "biznes", label: "Biznes turlari", href: "/biznes-turlari/" },
   { key: "video", label: "Video qo'llanmalar", href: "/video-qollanmalar/" },
+  { key: "yuklab", label: "Yuklab olish", href: "/yuklab-olish/" },
   { key: "faq", label: "FAQ", href: "/#faq" },
   { key: "aloqa", label: "Aloqa", href: "/aloqa/" },
 ];
@@ -131,7 +132,7 @@ function footer(c) {
       a(c.appUrl(), "Tizimga kirish"),
       a(c.appUrl("?signup=1"), "Bepul sinab ko'rish (14 kun)"),
       a(c.appUrl("demo.html"), "Jonli demo", true),
-      a(c.appUrl("install.html"), "Ilovani o'rnatish", true),
+      a("/yuklab-olish/", "Ilovani o'rnatish"),
       ...social.map(([k, v]) => a(v, k[0].toUpperCase() + k.slice(1), true)),
     ])}
   </div>

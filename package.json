@@ -17,7 +17,9 @@
     "test:ui": "node tests/ui.test.cjs",
     "assets": "node scripts/assets.mjs",
     "shots": "node tools/shots.mjs",
-    "og": "node tools/og.mjs"
+    "og": "node tools/og.mjs",
+    "video": "node tools/video.mjs",
+    "yuklab": "node tools/yuklab.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.3.16",

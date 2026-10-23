@@ -60,6 +60,7 @@ const JOBS = [
   ["imkoniyatlar", { eyebrow: "Imkoniyatlar", title: "Savdo, ombor, qarzlar va hisobotlar — bitta tizimda", shot: "d-ombor" }],
   ["video-qollanmalar", { eyebrow: "Video qo'llanmalar", title: "Tizimni bosqichma-bosqich o'rganing", shot: "d-mijozlar" }],
   ["aloqa", { eyebrow: "Aloqa", title: "Biznesingiz uchun demo so'rang", shot: "d-rest-pos" }],
+  ["yuklab-olish", { eyebrow: "Yuklab olish", title: "Tizimchi'ni telefon va kompyuterga o'rnating", shot: "d-savdo" }],
   ...INDUSTRY_PAGES.map((i) => [i.slug, { eyebrow: i.name, title: i.hero.title.replace(/\.$/, ""), shot: i.shots.desktop, icon: i.icon, tone: i.tone }]),
 ];
 

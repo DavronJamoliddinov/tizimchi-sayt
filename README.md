@@ -2,7 +2,9 @@
 
 Tizimchi platformasining sayti va uning backend'i — **alohida, mustaqil loyiha** (ilova loyihasiga bog'liq emas):
 
-- **frontend/** — sayt: bosh sahifa, 11 ta biznes turi, imkoniyatlar, video qo'llanmalar, aloqa va demo so'rovi, maxfiylik siyosati, oferta;
+- **frontend/** — sayt: bosh sahifa, 11 ta biznes turi, imkoniyatlar, video qo'llanmalar, ilovani yuklab olish (Windows dasturi,
+  Android ilovasi, iPhone, macOS/Linux),
+  aloqa va demo so'rovi, maxfiylik siyosati, oferta;
   **/admin/** — sayt boshqaruvi (video qo'llanmalar, demo so'rovlari, Telegram bildirishnomalari).
 - **backend/** — Supabase (bepul tarif): `schema.sql` — jadvallar, himoya, funksiyalar. O'rnatish: [backend/README.md](backend/README.md).
 
@@ -23,6 +25,8 @@ frontend/
     legal.mjs              Maxfiylik siyosati va ommaviy oferta
     taxonomy.mjs           Biznes turi va bo'lim kodlari (backend/schema.sql bilan bir xil — test tekshiradi)
     shots.mjs              Ekran kadrlari ro'yxati va alt matnlari
+    tutorials.json         Video qo'llanmalar ro'yxati backend'siz (npm run video yozadi; backend ulanmagan bo'lsa ishlatiladi)
+    downloads.json         Yuklab olish fayllari: versiya, hajm, SHA-256, imzo (npm run yuklab yozadi)
   src/build/             Sahifa shablonlari (Node): layout, komponentlar, sahifalar, forma, /admin/ qobig'i
   src/client/            Brauzer kodi: main.js (sayt), admin.js (boshqaruv), tutorials.js (build bilan umumiy), util.js
   src/styles/            Dizayn tizimi: tokens → base → components → sections → pages; admin.css
@@ -31,10 +35,12 @@ backend/
   schema.sql             Supabase: jadvallar, RLS, funksiyalar, Telegram (pg_net)
   README.md              O'rnatish yo'riqnomasi
 scripts/                 build.mjs (yig'ish), dev.mjs (lokal server), assets.mjs (shrift va ikonkalarni yangilash)
-tools/                   shots.mjs (ilova ekranlarini suratga olish), og.mjs (ijtimoiy tarmoq rasmlari)
+tools/                   shots.mjs (ilova ekranlari), og.mjs (ijtimoiy tarmoq rasmlari), video.mjs (videolaringizni qo'shish), yuklab.mjs (o'rnatgichlar)
 tests/                   build, backend (PGlite) va brauzer testlari
-deploy/Caddyfile         O'z serveringiz (VPS) uchun
+deploy/                  O'z serveringiz (VPS): Caddyfile (shablon), deploy-vps.sh (joylash), server/ (ilova manzili taymeri)
 dist/                    Production build — hostingga SHU papka yuklanadi (git'ga tushmaydi)
+media/                   Video qo'llanmalaringiz fayllari — npm run video yaratadi, deploy-vps.sh serverga yuklaydi (git'ga tushmaydi)
+yuklab/                  Windows o'rnatgichi va Android ilovasi — npm run yuklab nusxalaydi, deploy-vps.sh yuklaydi (git'ga tushmaydi)
 ```
 
 ## Ishga tushirish
@@ -60,8 +66,8 @@ Namunaviy video qo'llanmalar bilan ko'rish: `npm run dev -- --tutorials=tests/fi
 | Kalit | Ma'nosi |
 |---|---|
 | `SITE_URL` | Saytning asosiy manzili (canonical, sitemap, Open Graph). Domen ulanguncha hosting manzili: `https://<nom>.netlify.app` |
-| `APP_URL` | Tizimchi ilovasi manzili (hozir `https://dukonuz-app.netlify.app`) |
-| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Backend — o'z Supabase loyihangiz manzili va **ochiq** kaliti. Bo'sh bo'lsa sayt baribir ishlaydi: videolar «tez orada», forma telefon/Telegram'ni taklif qiladi |
+| `APP_URL` | Tizimchi ilovasi manzili — `https://tizimchi.com/ilova` (barqaror manzil, server ilovaning amaldagi joyiga yo'naltiradi — «Joylash» bo'limi) |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Backend — o'z Supabase loyihangiz manzili va **ochiq** kaliti. Bo'sh bo'lsa sayt baribir ishlaydi: videolar `frontend/content/tutorials.json` dan (u ham bo'lmasa — «tez orada»), forma telefon/Telegram'ni taklif qiladi |
 | `CONTACT` | Telefon va Telegram — sarlavha, footer, aloqa, forma xatolari |
 | `LEGAL` | Maxfiylik siyosati va ofertadagi Ijrochi rekvizitlari, tahrir sanasi |
 
@@ -88,6 +94,39 @@ Barcha tekshiruvlar backend'da: brauzer faqat funksiyalarni chaqiradi, jadvallar
    - «Tanlangan» yoqilsa — bosh sahifada birinchi.
 
 Video hali yo'q joyda «Bu bo'lim uchun video qo'llanma tez orada qo'shiladi» yoziladi — soxta video ko'rsatilmaydi.
+
+### Backend'siz: o'zingiz tayyorlagan videolarni qo'shish (hozir shu ishlatiladi)
+
+Video fayl (.mp4, .mov, .mkv, .webm — telefon yoki OBS yozuvi) yoki YouTube havolasi — bitta buyruq:
+
+```powershell
+npm run video -- add "C:\Videolar\kassa.mp4" --title "Kassada sotuv" --section savdo --capability kassa `
+  --description "Tovarni topish va to'lov" --steps "Savdo bo'limini oching | Tovarni qidiring | Sotish" --featured
+npm run video -- add "https://youtu.be/XXXXXXXXXXX" --title "Omborga kirim" --section ombor --duration 3:20
+npm run video -- list                        # ro'yxat
+npm run video -- remove kassada-sotuv        # o'chirish
+npm run build; bash deploy/deploy-vps.sh     # saytga chiqarish (fayllar ham yuklanadi) — «Joylash» bo'limi
+```
+
+Fayl veb uchun tayyorlanadi: H.264 + AAC, «faststart» (darhol boshlanadi), eni ko'pi bilan 1920; tayyor .mp4 qayta kodlanmaydi.
+Muqova, davomiylik va sahifa manzili (sarlavhadan) o'zi olinadi; havolada `?v=<xesh>` — video almashtirilsa, brauzer eskisini ko'rsatmaydi.
+Bo'limlar: `boshlash, savdo, ombor, taminot, mijozlar, xodimlar, hisobot, restoran, platforma`; `--industries` (vergul bilan) — biznes turlari.
+Kerak: ffmpeg (`FFMPEG`; bo'lmasa ilova loyihasining `promo/` papkasidagisi). Backend ulangach videolar `/admin/` dan boshqariladi.
+
+## Ilovani yuklab olish — `/yuklab-olish/`
+
+Windows dasturi (.exe) va Android ilovasi (.apk) saytning o'zidan beriladi: `tizimchi.com/yuklab/<fayl>`, qisqa havolalar
+`tizimchi.com/yuklab/windows` va `tizimchi.com/yuklab/android` — doim eng yangi faylga (Telegram'da ulashish uchun).
+Sahifada versiya, hajm, SHA-256 va Android imzo sertifikati ko'rsatiladi; iPhone — Safari orqali, macOS/Linux — brauzer orqali o'rnatiladi.
+
+```powershell
+# 1) Ilova loyihasida (dokon_app) yig'ish: cd desktop; npm run build   va   npm run android
+npm run yuklab                               # 2) eng yangi fayllar → yuklab/ va frontend/content/downloads.json
+npm run build; bash deploy/deploy-vps.sh     # 3) serverga: faqat yangi fayllar yuklanadi, serverda SHA-256 tekshiriladi
+```
+
+Windows dasturi hozircha raqamli sertifikatsiz — sahifa «Windows himoya qildi» oynasida nima qilishni va faylni tekshirishni ochiq yozadi.
+Sertifikat olingach (`signed: true`), bu ogohlantirish sahifadan o'zi yo'qoladi. Eski versiyalar serverda qoladi (ulashilgan havolalar ishlaydi).
 **SEO:** har bir video uchun alohida sahifa (`/video-qollanmalar/<manzil>/`, `VideoObject` bilan) sayt navbatdagi build'da yaratiladi; undan oldin video `/video-qollanmalar/korish/?v=<manzil>` da ochiladi.
 
 ## Demo so'rovi formasi
@@ -121,8 +160,10 @@ Matnlar `frontend/content/*.mjs` da. O'zgartirgach `npm run build` (`npm run dev
   npm run build
   SERVER=root@109.199.101.152 KEY=~/.ssh/tizimchi_vps bash deploy/deploy-vps.sh
   ```
-  `dist/` → `/var/www/tizimchi-sayt` (yangi papkaga yuklanib, bir zumda almashtiriladi), Caddy sayt fayli
-  `/etc/caddy/sites/tizimchi.com.caddy` (shablon — `deploy/Caddyfile`: CSP `dist/.csp` dan, HTTPS, kesh, 404).
+  `dist/` → `/var/www/tizimchi-sayt` (yangi papkaga yuklanib, bir zumda almashtiriladi), `media/` → `/var/www/tizimchi-media`
+  (saytdan oldin; sayt ishora qilgan har bir video `media/` da borligi tekshiriladi), `yuklab/` → `/var/www/tizimchi-yuklab`
+  (faqat yangi fayllar, so'ng serverda SHA-256), Caddy sayt fayli `/etc/caddy/sites/tizimchi.com.caddy`
+  (shablon — `deploy/Caddyfile`: CSP `dist/.csp` dan, HTTPS, kesh, `/media/`, `/yuklab/`, 404).
   Serverdagi Caddy — `/etc/caddy/sites/*.caddy` ni import qiladi (Tizimchi ilovasining `deploy/server-setup.sh` sozlaydi).
 - **Ilova havolalari:** `APP_URL = https://tizimchi.com/ilova` — barqaror manzil; Caddy uni ilovaning amaldagi joyiga
   yo'naltiradi (yo'l va so'rov saqlanadi). `app.tizimchi.com` ishga tushishi bilan `tizimchi-app-switch` taymeri
@@ -143,6 +184,8 @@ npm run test:ui      # brauzer (Edge/Chrome, headless, CSP bilan): menyu, tablar
 |---|---|
 | `npm run shots` | Ilovaning haqiqiy ekranlarini qayta suratga oladi → `frontend/assets/shots/`. Ilova loyihasi kerak: `APP_DIR` (standart `../dokon_app`), Chrome (`CHROME`) |
 | `npm run og` | Ijtimoiy tarmoq rasmlari (1200×630) → `frontend/assets/og/` (sarlavhalar o'zgarganda) |
+| `npm run video` | O'zingiz tayyorlagan video qo'llanmani qo'shish / ro'yxat / o'chirish — «Sayt boshqaruvi» bo'limida batafsil |
+| `npm run yuklab` | Windows o'rnatgichi va Android ilovasini saytga tayyorlash — «Ilovani yuklab olish» bo'limida batafsil |
 | `npm run assets` | Inter shrifti va Lucide ikonkalarini qayta yuklaydi (yangi ikonka kerak bo'lganda — ro'yxat `scripts/assets.mjs` da) |
 
 ## Analitika

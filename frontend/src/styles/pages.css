@@ -172,3 +172,34 @@ a.cap-video:hover { text-decoration: underline; text-underline-offset: 3px; }
 .nf-code { font-size: clamp(5rem, 3rem + 10vw, 10rem); font-weight: 800; letter-spacing: -.06em; line-height: 1; margin-bottom: var(--s-4);
   background: var(--brand-text-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .nf .lead { margin: var(--s-4) auto 0; max-width: 560px; }
+
+/* ---------- Yuklab olish ---------- */
+.dl-grid { display: grid; gap: var(--s-4); grid-template-columns: 1fr; margin-top: var(--s-8); }
+@media (min-width: 760px) { .dl-grid { grid-template-columns: repeat(2, 1fr); } }
+.dl-card { display: flex; flex-direction: column; gap: var(--s-4); padding: clamp(22px, 2.4vw, 28px); border-radius: var(--r-xl);
+  background: var(--surface); border: 1px solid var(--line); }
+.dl-card.is-current { border-color: rgba(var(--brand-rgb), .45); box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .12), var(--shadow-2); }
+.dl-you { align-self: flex-start; margin-bottom: calc(-1 * var(--s-2)); }
+.dl-head { display: flex; align-items: center; gap: var(--s-3); }
+.dl-head > div { flex: 1; min-width: 0; }
+.dl-title { font-size: var(--fs-h3); margin: 0; letter-spacing: -.015em; }
+.dl-sub { margin: 2px 0 0; color: var(--text-3); font-size: var(--fs-sm); }
+.dl-steps { margin: 0; padding-left: 1.25em; display: grid; gap: var(--s-2); color: var(--text-2); font-size: var(--fs-sm); }
+.dl-steps li::marker { color: var(--brand); font-weight: 700; }
+.dl-note { display: flex; gap: var(--s-2); align-items: flex-start; margin: 0; padding: var(--s-3); border-radius: var(--r-md);
+  background: var(--surface-2); color: var(--text-2); font-size: var(--fs-xs); }
+.dl-note .ic { width: 16px; height: 16px; flex: none; margin-top: 2px; color: var(--text-3); }
+.dl-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: auto; }
+.dl-actions .btn { flex: 1 1 auto; justify-content: center; }
+.dl-meta { display: flex; gap: var(--s-2); align-items: center; margin: calc(-1 * var(--s-1)) 0 0; color: var(--text-3);
+  font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+.dl-meta .ic { width: 15px; height: 15px; flex: none; }
+/* Fayl haqiqiyligi: SHA-256 (bosilganda butunlay belgilanadi — nusxalash oson) */
+.dl-verify { max-width: 880px; }
+.dl-hashes { display: grid; gap: var(--s-3); margin: var(--s-6) 0 var(--s-4); }
+.dl-hash { display: grid; gap: var(--s-2); padding: var(--s-4); border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); }
+.dl-hash dt { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--s-3); }
+.dl-hash dt small { color: var(--text-3); font-size: var(--fs-xs); }
+.dl-hash dd { margin: 0; }
+.dl-hash code { display: block; padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); background: var(--surface-2); color: var(--text);
+  font: 500 .8125rem/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace; word-break: break-all; user-select: all; }

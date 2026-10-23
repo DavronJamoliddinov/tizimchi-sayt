@@ -80,7 +80,7 @@ a.chip-soft:hover { background: var(--fill-2); color: var(--text); }
 .menu-btn[aria-expanded="true"] .menu-ic i:first-child { top: 6px; transform: rotate(45deg); }
 .menu-btn[aria-expanded="true"] .menu-ic i:last-child { top: 6px; transform: rotate(-45deg); }
 @media (min-width: 640px) { .hdr-login { display: inline-flex; } }
-@media (min-width: 1120px) {
+@media (min-width: 1200px) { /* 7 ta bo'lim sig'ishi uchun (1120 da 3px yetmasdi) — main.js dagi matchMedia bilan bir xil */
   .nav { display: flex; }
   .menu-btn { display: none; }
 }

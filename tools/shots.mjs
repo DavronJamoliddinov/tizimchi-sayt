@@ -18,7 +18,7 @@ async function enrich(page, base, query = "") {
   await page.goto(`${base}/demo.html${query}`, { waitUntil: "networkidle0" });
   await settle(page, 600);
   await page.evaluate(async () => {
-    const KEY = "dokon.demo.db.v4";
+    const KEY = localStorage.getItem("tizimchi.demo.db.v4") != null ? "tizimchi.demo.db.v4" : "dokon.demo.db.v4";
     const db0 = JSON.parse(localStorage.getItem(KEY));
     if (db0.__siteEnriched) return;
     const inv = (name) => db0.inventory.find((x) => x.name === name);
@@ -76,7 +76,7 @@ async function pharmacy(page, base) {
   await page.goto(`${base}/demo.html?dorixona=1`, { waitUntil: "networkidle0" });
   await settle(page, 700);
   await page.evaluate(() => {
-    const KEY = "dokon.demo.db.v4";
+    const KEY = localStorage.getItem("tizimchi.demo.db.v4") != null ? "tizimchi.demo.db.v4" : "dokon.demo.db.v4";
     const db = JSON.parse(localStorage.getItem(KEY));
     const drugs = new Set(db.inventory.filter((x) => x.inn).map((x) => x.id));
     db.inventory = db.inventory.filter((x) => drugs.has(x.id));
@@ -89,7 +89,7 @@ async function pharmacy(page, base) {
   await page.goto(`${base}/demo.html?dorixona=1&tab=savdo`, { waitUntil: "networkidle0" });
   await settle(page, 700);
   await page.evaluate(async () => {
-    const KEY = "dokon.demo.db.v4";
+    const KEY = localStorage.getItem("tizimchi.demo.db.v4") != null ? "tizimchi.demo.db.v4" : "dokon.demo.db.v4";
     const db = JSON.parse(localStorage.getItem(KEY));
     const inv = (name) => db.inventory.find((x) => x.name.startsWith(name));
     const iso = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -112,7 +112,7 @@ function shopOf(o) {
     await page.goto(`${base}/demo.html`, { waitUntil: "networkidle0" });
     await settle(page, 600);
     await page.evaluate((o) => {
-      const KEY = "dokon.demo.db.v4";
+      const KEY = localStorage.getItem("tizimchi.demo.db.v4") != null ? "tizimchi.demo.db.v4" : "dokon.demo.db.v4";
       const db = JSON.parse(localStorage.getItem(KEY));
       for (const k of ["inventory", "inventory_stock", "inventory_lots", "stock_moves", "sales", "sale_items", "sale_returns", "sale_return_items",
         "clients", "client_transactions", "orders", "order_items", "purchases", "purchase_items", "supplier_transactions", "suppliers", "reminders", "audit_log"]) db[k] = [];
@@ -125,7 +125,7 @@ function shopOf(o) {
     await page.evaluate(async (o) => {
       const r = await sb.rpc("stock_receive", { p: { supplier_name: o.supplier, doc_no: "N-210", items: o.items } });
       if (r.error) console.log("stock_receive", r.error.message);
-      const db = JSON.parse(localStorage.getItem("dokon.demo.db.v4"));
+      const db = JSON.parse(localStorage.getItem("tizimchi.demo.db.v4") ?? localStorage.getItem("dokon.demo.db.v4"));
       const inv = (name) => db.inventory.find((x) => x.name.startsWith(name));
       const iso = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
       for (const [time, method, items] of o.sales) {

@@ -2,14 +2,16 @@
 //
 //   node scripts/build.mjs                 production → dist/ (hostingga shu papka yuklanadi)
 //   node scripts/build.mjs --dev           lokal ko'rinish → .dev-dist/: demo forma sinov rejimida (/__dev/lead), «Lokal ko'rinish» belgisi
-//   --tutorials=live|none|<fayl.json>      video qo'llanmalar manbai (standart: live — backend ulangan bo'lsa; javob bermasa — bo'sh)
+//   --tutorials=live|none|<fayl.json>      video qo'llanmalar manbai (standart: live — backend ulangan bo'lsa; javob bermasa — bo'sh;
+//                                          backend ulanmagan bo'lsa — frontend/content/tutorials.json, uni «npm run videos» yozadi)
+//   --downloads=none|<fayl.json>           ilovani yuklab olish fayllari (standart: frontend/content/downloads.json — npm run yuklab yozadi)
 //   --out=<papka>                          boshqa joyga (testlar uchun)
 //
 // Sozlamalar: frontend/site.config.mjs (muhit o'zgaruvchilari ustun: SITE_URL, APP_URL, SUPABASE_URL, SUPABASE_ANON_KEY).
 // Natija: har bir sahifa — tayyor HTML (SEO), CSS va JS — xeshli nomli fayllar (1 yil kesh), sitemap.xml, robots.txt,
 // _headers (Netlify/Cloudflare: CSP va kesh), _redirects, 404.html va /admin/ (sayt boshqaruvi, indekslanmaydi).
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -63,15 +65,19 @@ const cfg = {
   legal: SITE_CFG.LEGAL || {}, social: SITE_CFG.SOCIAL || {},
 };
 if (!cfg.phone || !cfg.telegram) throw new Error("frontend/site.config.mjs: CONTACT.PHONE va CONTACT.TELEGRAM to'ldirilishi shart");
-if (!supabaseUrl) console.log("  ! backend ulanmagan (SUPABASE_URL bo'sh): video qo'llanmalar «tez orada», forma telefon/Telegram'ni taklif qiladi, /admin/ sozlash yo'riqnomasini ko'rsatadi");
+if (!supabaseUrl) console.log("  ! backend ulanmagan (SUPABASE_URL bo'sh): video qo'llanmalar frontend/content/tutorials.json dan (bo'lmasa «tez orada»), forma telefon/Telegram'ni taklif qiladi, /admin/ sozlash yo'riqnomasini ko'rsatadi");
 
 /* ---------- 2. Video qo'llanmalar nusxasi ---------- */
+const LOCAL_TUTORIALS = join(FRONT, "content", "tutorials.json"); // tools/videos.mjs yozadi (o'z serverdagi videolar)
 async function loadTutorials() {
   let rows = [];
   let source = TUT_SRC;
   if (TUT_SRC === "none") rows = [];
   else if (TUT_SRC.endsWith(".json")) rows = JSON.parse(readFileSync(join(ROOT, TUT_SRC), "utf8"));
-  else if (!supabaseUrl) source = "backend ulanmagan, bo'sh ro'yxat";
+  else if (!supabaseUrl && existsSync(LOCAL_TUTORIALS)) {
+    rows = JSON.parse(readFileSync(LOCAL_TUTORIALS, "utf8"));
+    source = "backend ulanmagan — frontend/content/tutorials.json";
+  } else if (!supabaseUrl) source = "backend ulanmagan, bo'sh ro'yxat";
   else {
     try {
       const r = await fetch(`${supabaseUrl}/rest/v1/rpc/site_tutorials_public`, { headers: apiHeaders(anonKey), signal: AbortSignal.timeout(8000) });
@@ -88,6 +94,26 @@ const { rows: tutorialRows, list: tutorials } = await loadTutorials();
 /** Nusxa imzosi: brauzer jonli ma'lumot bir xil bo'lsa qayta chizmaydi */
 const tutorialsSig = (list) => list.map((t) => `${t.slug}@${t.updatedAt}`).join("|");
 const pretty = new Set(tutorials.map((t) => t.slug)); // oldindan chizilgan sahifalar
+
+/* ---------- 2b. Ilovani yuklab olish fayllari (fayllarning o'zi — yuklab/, serverda tizimchi.com/yuklab/) ---------- */
+const DL_FILE = { windows: /^Tizimchi-Setup-\d+\.\d+\.\d+\.exe$/, android: /^Tizimchi-\d+\.\d+\.\d+\.apk$/ };
+/** @returns {import("../frontend/src/build/kit.mjs").Downloads} */
+function loadDownloads() {
+  const src = opt("downloads");
+  if (src === "none") return {};
+  const file = src ? resolve(ROOT, src) : join(FRONT, "content", "downloads.json");
+  if (!existsSync(file)) return {};
+  const raw = JSON.parse(readFileSync(file, "utf8"));
+  for (const [k, d] of Object.entries(raw)) {
+    if (!DL_FILE[k]) throw new Error(`downloads.json: noma'lum platforma «${k}» (windows | android)`);
+    if (!DL_FILE[k].test(d.file) || !/^\d+\.\d+\.\d+$/.test(d.version) || !d.file.includes(d.version) || !(d.bytes > 0) || !/^[0-9a-f]{64}$/.test(d.sha256)) {
+      throw new Error(`downloads.json: «${k}» yozuvi noto'g'ri — npm run yuklab bilan qayta yarating`);
+    }
+  }
+  console.log(`  yuklab olish: ${Object.values(raw).map((d) => d.file).join(", ") || "fayl yo'q (brauzer orqali o'rnatish)"}`);
+  return raw;
+}
+const downloads = loadDownloads();
 
 /* ---------- 3. Asset'lar ---------- */
 rmSync(OUT, { recursive: true, force: true });
@@ -147,7 +173,7 @@ const tctx = {
 };
 /** @type {import("../frontend/src/build/kit.mjs").Ctx} */
 const ctx = {
-  cfg, tutorials, tctx, icon,
+  cfg, tutorials, tctx, icon, downloads,
   asset: (p) => A.url(p),
   url: (p) => (p.startsWith("http") ? p : siteUrl + (p.startsWith("/") ? p : "/" + p)),
   appUrl: (p = "") => appBase + p.replace(/^\/+/, ""),
@@ -176,6 +202,7 @@ const pages = [
   ...tutorials.map((t) => misc.tutorialPage(ctx, t)),
   misc.tutorialViewerPage(ctx),
   misc.contactPage(ctx),
+  misc.downloadPage(ctx),
   misc.legalPage(ctx, "maxfiylik", LEGAL_DOCS.maxfiylik),
   misc.legalPage(ctx, "oferta", LEGAL_DOCS.oferta),
   misc.notFoundPage(ctx),
@@ -245,6 +272,8 @@ writeFileSync(join(OUT, "_redirects"), `# Netlify / Cloudflare Pages
 /index.html  /  301
 `);
 writeFileSync(join(OUT, ".csp"), CSP + "\n"); // deploy/Caddyfile, lokal server va testlar uchun
+// deploy/deploy-vps.sh uchun: sahifalar ishora qilgan fayllar (serverda bo'lishi va SHA-256 mos kelishi shart)
+writeFileSync(join(OUT, ".yuklab"), Object.entries(downloads).map(([k, d]) => `${k} ${d.file} ${d.sha256} ${d.bytes}\n`).join(""));
 
 /* ---------- 7. Hisobot ---------- */
 const kb = (n) => `${Math.round(n / 1024)} KB`;
