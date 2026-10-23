@@ -252,7 +252,7 @@ writeFileSync(join(OUT, "_headers"), `# Netlify / Cloudflare Pages. O'z serverin
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
-  Strict-Transport-Security: max-age=31536000
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
